@@ -1,0 +1,22 @@
+<div class="loading" *ngIf="loading">
+	<img src="../../assets/images/loader.gif">
+</div>
+<ul id="favoritos-list" *ngIf="favoritos">
+	<li *ngFor="let favorito of favoritos" class="favorito-item">
+		<div class="content-data">
+			<h4>{{favorito.title}}</h4>
+			<p class="url">{{favorito.url}}</p>
+			<p class="buttons">
+				<a href="{{favorito.url}}" target="_blank" class="btn btn-default">Ir al marcador</a>
+				<a [routerLink]="['/favorito',favorito._id]" class="btn btn-ver">Ver</a>
+				<a [routerLink]="['/editar-favorito',favorito._id]" class="btn btn-editar">Editar</a>
+				<a (click)="onBorrarConfirm(favorito._id)" class="btn btn-eliminar">Eliminar</a>
+			</p>
+			<div class="seguro" *ngIf="confirmado == favorito._id">
+				<p><strong>¿Estas seguro de borrar este elemento?</strong></p>
+				<a (click)="onBorrarFavorito(favorito._id)" class="btn btn-eliminar">Eliminar</a>
+				<a (click)="onCancelarConfirm(favorito._id)" class="btn btn-ver">Cancelar</a>
+			</div>
+		</div>
+	</li>
+</ul>

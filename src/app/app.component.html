@@ -1,0 +1,20 @@
+<div id='content'>
+	<header id="header">
+		<a [routerLink]="['/']">
+		<img src="../../assets/images/star.png" id="logo">
+		<div class="title-subtitle">
+			<h1>{{title}}</h1>
+			<p>{{description}}</p>
+		</div>
+		</a>
+		<a class="btn-add-favorito" [routerLink]="['/agregar-favorito']">Agregar favorito</a>
+		<div class="clearfix"></div>
+	</header>
+	<section class="main">
+		<router-outlet></router-outlet>
+		<div class="clearfix"></div>
+	</section>
+</div>
+<footer>
+	Todos los derechos reservados
+</footer>
