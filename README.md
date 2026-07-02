@@ -1,34 +1,65 @@
-# favoritos
-Front end con Angular2 de la API RESTful favoritos para guardar paginas favoritas
-
 # Favoritos
 
-This project was generated with [angular-cli](https://github.com/angular/angular-cli) version 1.0.0-beta.28.3.
+Frontend en **Angular 22** para guardar páginas favoritas (marcadores), consumiendo una API RESTful de favoritos.
 
-## Development server
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Aplicación CRUD: listar, ver, agregar, editar y eliminar marcadores.
 
-## Code scaffolding
+## Stack
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive/pipe/service/class/module`.
+- **Angular 22** (standalone components, zoneless, signals, control-flow `@if`/`@for`)
+- **TypeScript 6**
+- **RxJS 7** + `HttpClient` (`provideHttpClient`)
+- **Vitest** para pruebas unitarias
+- Formularios reactivos tipados
+
+## Requisitos
+
+- Node.js 20+ (probado con Node 24)
+- npm 10+
+
+## Instalación
+
+```bash
+npm install
+```
+
+## Configuración de la API
+
+La URL de la API se define en los archivos de entorno:
+
+- Desarrollo: [`src/environments/environment.ts`](src/environments/environment.ts) → `apiUrl: 'http://localhost:5000/api'`
+- Producción: [`src/environments/environment.prod.ts`](src/environments/environment.prod.ts) → `apiUrl: '/api'`
+
+Ajusta `apiUrl` según dónde esté desplegado tu backend. El contrato esperado es:
+
+| Método | Ruta                  | Respuesta                 |
+| ------ | --------------------- | ------------------------- |
+| GET    | `/favoritos`          | `{ favoritos: [...] }`    |
+| GET    | `/favorito/:id`       | `{ favorito: {...} }`     |
+| POST   | `/favorito`           | `{ favorito: {...} }`     |
+| PUT    | `/favorito/:id`       | `{ favorito: {...} }`     |
+| DELETE | `/favorito/:id`       | `{ message: "..." }`      |
+
+## Desarrollo
+
+```bash
+npm start
+```
+
+Navega a `http://localhost:4200/`. La app recarga al cambiar los archivos fuente.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+```bash
+npm run build
+```
 
-## Running unit tests
+Los artefactos se generan en `dist/`. Por defecto usa la configuración de producción.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Pruebas
 
-## Running end-to-end tests
+```bash
+npm test
+```
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
-
-## Deploying to GitHub Pages
-
-Run `ng github-pages:deploy` to deploy to GitHub Pages.
-
-## Further help
-
-To get more help on the `angular-cli` use `ng help` or go check out the [Angular-CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Ejecuta las pruebas unitarias con Vitest.

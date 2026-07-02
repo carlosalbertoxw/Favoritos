@@ -1,41 +1,37 @@
-import { Injectable } from '@angular/core';
-import {Http, Response, Headers} from '@angular/http';
-import 'rxjs/add/operator/map';
-import {Observable} from 'rxjs/Observable';
-import {Favorito} from '../models/favorito';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-@Injectable()
+import { environment } from '../../environments/environment';
+import {
+  Favorito,
+  FavoritoResponse,
+  FavoritosResponse,
+  MessageResponse,
+} from '../models/favorito';
+
+@Injectable({ providedIn: 'root' })
 export class FavoritoService {
-	public url:string;
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiUrl;
 
-  	constructor(private _http:Http) { 
-  		this.url='http://localhost:5000/api/';
-  	}
+  getFavoritos(): Observable<FavoritosResponse> {
+    return this.http.get<FavoritosResponse>(`${this.baseUrl}/favoritos`);
+  }
 
-  	getFavoritos(){
-  		return this._http.get(this.url+'favoritos').map(res=>res.json());
-  	}
+  getFavorito(id: string): Observable<FavoritoResponse> {
+    return this.http.get<FavoritoResponse>(`${this.baseUrl}/favorito/${id}`);
+  }
 
-  	getFavorito(id:string){
-  		return this._http.get(this.url+'favorito/'+id).map(res=>res.json());
-  	}
+  addFavorito(favorito: Favorito): Observable<FavoritoResponse> {
+    return this.http.post<FavoritoResponse>(`${this.baseUrl}/favorito`, favorito);
+  }
 
-    addFavorito(favorito:Favorito){
-      let json = JSON.stringify(favorito);
-      let params = json;
-      let headers = new Headers({'Content-Type':'application/json'});
-      return this._http.post(this.url+'favorito',params,{headers: headers}).map(res => res.json());
-    }
+  editFavorito(id: string, favorito: Favorito): Observable<FavoritoResponse> {
+    return this.http.put<FavoritoResponse>(`${this.baseUrl}/favorito/${id}`, favorito);
+  }
 
-    editFavorito(id:string, favorito:Favorito){
-      let json = JSON.stringify(favorito);
-      let params = json;
-      let headers = new Headers({'Content-Type':'application/json'});
-      return this._http.put(this.url+'favorito/'+id,params,{headers: headers}).map(res => res.json());
-    }
-
-    deleteFavorito(id:string){
-      return this._http.delete(this.url+'favorito/'+id).map(res=>res.json());
-    }
-
+  deleteFavorito(id: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${this.baseUrl}/favorito/${id}`);
+  }
 }

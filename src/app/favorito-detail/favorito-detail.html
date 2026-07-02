@@ -1,0 +1,9 @@
+@if (favorito(); as fav) {
+  <div class="favorito-box">
+    <h1>{{ fav.title }}</h1>
+    <p class="url">
+      <a [href]="fav.url" target="_blank" rel="noopener">{{ fav.url }}</a>
+    </p>
+    <p class="description">{{ fav.description }}</p>
+  </div>
+}

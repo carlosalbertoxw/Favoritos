@@ -1,0 +1,10 @@
+.error {
+  color: #e23237;
+  margin: 15px;
+}
+
+.empty {
+  list-style: none;
+  color: gray;
+  padding: 15px;
+}

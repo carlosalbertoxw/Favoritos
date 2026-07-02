@@ -1,0 +1,35 @@
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+
+@if (loading()) {
+  <div class="loading">
+    <img src="images/loader.gif" alt="Cargando…">
+  </div>
+} @else {
+  <ul id="favoritos-list">
+    @for (favorito of favoritos(); track favorito.id) {
+      <li class="favorito-item">
+        <div class="content-data">
+          <h4>{{ favorito.title }}</h4>
+          <p class="url">{{ favorito.url }}</p>
+          <p class="buttons">
+            <a [href]="favorito.url" target="_blank" rel="noopener" class="btn btn-default">Ir al marcador</a>
+            <a [routerLink]="['/favorito', favorito.id]" class="btn btn-ver">Ver</a>
+            <a [routerLink]="['/editar-favorito', favorito.id]" class="btn btn-editar">Editar</a>
+            <button type="button" (click)="onBorrarConfirm(favorito.id!)" class="btn btn-eliminar">Eliminar</button>
+          </p>
+          @if (confirmado() === favorito.id) {
+            <div class="seguro">
+              <p><strong>¿Estás seguro de borrar este elemento?</strong></p>
+              <button type="button" (click)="onBorrarFavorito(favorito.id!)" class="btn btn-eliminar">Eliminar</button>
+              <button type="button" (click)="onCancelarConfirm()" class="btn btn-ver">Cancelar</button>
+            </div>
+          }
+        </div>
+      </li>
+    } @empty {
+      <li class="empty">No hay favoritos todavía.</li>
+    }
+  </ul>
+}
