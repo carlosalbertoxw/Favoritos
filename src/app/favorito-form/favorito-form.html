@@ -1,0 +1,28 @@
+<form [formGroup]="form()" (ngSubmit)="submitted.emit()" novalidate>
+  <label for="title">Título:</label>
+  <p>
+    <input id="title" type="text" formControlName="title" [attr.aria-invalid]="!!errorFor('title')">
+    @if (errorFor('title'); as message) {
+      <span class="error">{{ message }}</span>
+    }
+  </p>
+
+  <label for="description">Descripción (opcional):</label>
+  <p>
+    <textarea id="description" formControlName="description" [attr.aria-invalid]="!!errorFor('description')"></textarea>
+    <small class="hint">Máximo {{ limits.description }} caracteres.</small>
+    @if (errorFor('description'); as message) {
+      <span class="error">{{ message }}</span>
+    }
+  </p>
+
+  <label for="url">URL:</label>
+  <p>
+    <input id="url" type="url" formControlName="url" placeholder="https://" [attr.aria-invalid]="!!errorFor('url')">
+    @if (errorFor('url'); as message) {
+      <span class="error">{{ message }}</span>
+    }
+  </p>
+
+  <button type="submit">{{ submitLabel() }}</button>
+</form>

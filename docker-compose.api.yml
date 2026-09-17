@@ -1,0 +1,23 @@
+# Conecta el frontend con la API del repositorio Api-restful-favoritos que corre en Docker.
+#
+# 1. Levanta la API (y MongoDB) desde su repositorio:
+#      cd ../Api-restful-favoritos && docker compose up -d --build
+# 2. Levanta el frontend desde este directorio:
+#      docker compose -f docker-compose.yml -f docker-compose.api.yml up -d --build
+#
+# El contenedor web se une a la red de Docker de la API y nginx reenvía /api/
+# al servicio "api" por su nombre, sin pasar por la máquina anfitriona.
+
+services:
+  web:
+    environment:
+      API_URL: http://api:5000
+    networks:
+      - default
+      - api
+
+networks:
+  api:
+    # Red que crea Docker Compose para el proyecto de la API (<directorio>_default).
+    name: ${API_NETWORK:-api-restful-favoritos_default}
+    external: true

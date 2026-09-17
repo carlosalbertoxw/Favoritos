@@ -2,34 +2,8 @@
   <h1>{{ titleSection }}</h1>
 
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <p class="error" role="alert">{{ message }}</p>
   }
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <label for="title">Título:</label>
-    <p>
-      <input id="title" type="text" formControlName="title">
-      @if (form.controls.title.touched && form.controls.title.invalid) {
-        <span class="error">¡El título es obligatorio!</span>
-      }
-    </p>
-
-    <label for="description">Descripción:</label>
-    <p>
-      <textarea id="description" formControlName="description"></textarea>
-      @if (form.controls.description.touched && form.controls.description.invalid) {
-        <span class="error">¡La descripción es obligatoria!</span>
-      }
-    </p>
-
-    <label for="url">URL:</label>
-    <p>
-      <input id="url" type="url" formControlName="url">
-      @if (form.controls.url.touched && form.controls.url.invalid) {
-        <span class="error">¡La URL es obligatoria!</span>
-      }
-    </p>
-
-    <button type="submit">{{ titleSection }}</button>
-  </form>
+  <app-favorito-form [form]="form" [submitLabel]="titleSection" (submitted)="onSubmit()" />
 </div>

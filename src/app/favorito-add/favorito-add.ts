@@ -1,28 +1,29 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 
 import { FavoritoService } from '../services/favorito.service';
+import { FavoritoForm } from '../favorito-form/favorito-form';
+import {
+  applyApiErrors,
+  createFavoritoForm,
+  describeSaveError,
+  toFavorito,
+} from '../favorito-form/favorito-form.validators';
 
 @Component({
   selector: 'app-favorito-add',
-  imports: [ReactiveFormsModule],
+  imports: [FavoritoForm],
   templateUrl: './favorito-add.html',
   styleUrl: './favorito-add.css',
 })
 export class FavoritoAdd {
-  private readonly fb = inject(FormBuilder);
   private readonly favoritoService = inject(FavoritoService);
   private readonly router = inject(Router);
 
   protected readonly titleSection = 'Agregar favorito';
   protected readonly error = signal<string | null>(null);
-
-  protected readonly form = this.fb.nonNullable.group({
-    title: ['', Validators.required],
-    description: ['', Validators.required],
-    url: ['', Validators.required],
-  });
+  protected readonly form = createFavoritoForm(inject(FormBuilder));
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -30,10 +31,12 @@ export class FavoritoAdd {
       return;
     }
 
-    this.favoritoService.addFavorito(this.form.getRawValue()).subscribe({
+    this.error.set(null);
+    this.favoritoService.addFavorito(toFavorito(this.form)).subscribe({
       next: () => this.router.navigate(['/']),
       error: (err) => {
-        this.error.set('Error al guardar el favorito.');
+        const fieldErrors = applyApiErrors(this.form, err);
+        this.error.set(describeSaveError('Error al guardar el favorito.', err, fieldErrors));
         console.error(err);
       },
     });

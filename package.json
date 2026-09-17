@@ -8,35 +8,36 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:unit": "ng test --watch=false --exclude \"**/*.integration.spec.ts\"",
+    "test:integration": "ng test --watch=false --include \"**/*.integration.spec.ts\"",
+    "test:ci": "ng test --watch=false --coverage",
+    "healthcheck": "node scripts/healthcheck.mjs",
     "lint": "ng lint"
   },
   "private": true,
-  "packageManager": "npm@11.13.0",
-  "overrides": {
-    "@babel/core": "7.29.7",
-    "esbuild": "0.28.1"
-  },
+  "packageManager": "npm@11.16.0",
   "dependencies": {
-    "@angular/common": "^22.0.0",
-    "@angular/compiler": "^22.0.0",
-    "@angular/core": "^22.0.0",
-    "@angular/forms": "^22.0.0",
-    "@angular/platform-browser": "^22.0.0",
-    "@angular/router": "^22.0.0",
+    "@angular/common": "^22.1.7",
+    "@angular/compiler": "^22.1.7",
+    "@angular/core": "^22.1.7",
+    "@angular/forms": "^22.1.7",
+    "@angular/platform-browser": "^22.1.7",
+    "@angular/router": "^22.1.7",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^22.0.4",
-    "@angular/cli": "^22.0.4",
-    "@angular/compiler-cli": "^22.0.0",
+    "@angular/build": "^22.1.8",
+    "@angular/cli": "^22.1.8",
+    "@angular/compiler-cli": "^22.1.7",
     "@eslint/js": "^10.0.1",
-    "angular-eslint": "22.0.0",
-    "eslint": "^10.3.0",
-    "jsdom": "^28.0.0",
-    "prettier": "^3.8.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "angular-eslint": "22.5.0",
+    "eslint": "^10.10.0",
+    "jsdom": "^30.1.0",
+    "prettier": "^3.9.7",
     "typescript": "~6.0.2",
-    "typescript-eslint": "8.60.1",
-    "vitest": "^4.0.8"
+    "typescript-eslint": "8.70.0",
+    "vitest": "^4.1.11"
   }
 }

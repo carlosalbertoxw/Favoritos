@@ -1,31 +1,32 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 
 import { FavoritoService } from '../services/favorito.service';
+import { FavoritoForm } from '../favorito-form/favorito-form';
+import {
+  applyApiErrors,
+  createFavoritoForm,
+  describeSaveError,
+  toFavorito,
+} from '../favorito-form/favorito-form.validators';
 
 @Component({
   selector: 'app-favorito-edit',
-  imports: [ReactiveFormsModule],
+  imports: [FavoritoForm],
   templateUrl: './favorito-edit.html',
   styleUrl: './favorito-edit.css',
 })
 export class FavoritoEdit implements OnInit {
-  private readonly fb = inject(FormBuilder);
   private readonly favoritoService = inject(FavoritoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly titleSection = 'Editar favorito';
   protected readonly error = signal<string | null>(null);
+  protected readonly form = createFavoritoForm(inject(FormBuilder));
 
   private id: string | null = null;
-
-  protected readonly form = this.fb.nonNullable.group({
-    title: ['', Validators.required],
-    description: ['', Validators.required],
-    url: ['', Validators.required],
-  });
 
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id');
@@ -55,10 +56,12 @@ export class FavoritoEdit implements OnInit {
       return;
     }
 
-    this.favoritoService.editFavorito(this.id, this.form.getRawValue()).subscribe({
+    this.error.set(null);
+    this.favoritoService.editFavorito(this.id, toFavorito(this.form)).subscribe({
       next: () => this.router.navigate(['/']),
       error: (err) => {
-        this.error.set('Error al actualizar el favorito.');
+        const fieldErrors = applyApiErrors(this.form, err);
+        this.error.set(describeSaveError('Error al actualizar el favorito.', err, fieldErrors));
         console.error(err);
       },
     });
