@@ -1,0 +1,65 @@
+version: 2
+
+updates:
+  # Dependencias npm de la aplicación Angular
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Mexico_City
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "angular-eslint"
+        update-types:
+          - minor
+          - patch
+      herramientas-dev:
+        dependency-type: development
+        exclude-patterns:
+          - "@angular/*"
+          - "angular-eslint"
+        update-types:
+          - minor
+          - patch
+      produccion:
+        dependency-type: production
+        exclude-patterns:
+          - "@angular/*"
+        update-types:
+          - minor
+          - patch
+
+  # Acciones usadas por el workflow de CI
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Mexico_City
+    commit-message:
+      prefix: "ci"
+    groups:
+      acciones:
+        patterns:
+          - "*"
+
+  # Imágenes base de los Dockerfile
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Mexico_City
+    commit-message:
+      prefix: "docker"
