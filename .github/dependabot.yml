@@ -14,6 +14,11 @@ updates:
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
+    ignore:
+      # @angular/build fija el rango de TypeScript que soporta (p. ej. ">=6.0 <6.1");
+      # los saltos mayores de TypeScript llegan junto con la actualización de Angular.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       angular:
         patterns:
@@ -22,6 +27,12 @@ updates:
         update-types:
           - minor
           - patch
+      # vitest y sus plugins exigen la misma versión exacta entre sí,
+      # así que deben actualizarse en un solo PR (incluidas versiones mayores).
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
       herramientas-dev:
         dependency-type: development
         exclude-patterns:
