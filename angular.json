@@ -6,7 +6,7 @@
     "schematicCollections": [
       "angular-eslint"
     ],
-    "analytics": "75518046-5005-462e-8f9e-e31f79f9a04e"
+    "analytics": false
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -46,6 +46,11 @@
                   "maximumError": "8kB"
                 }
               ],
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "outputHashing": "all",
               "fileReplacements": [
                 {
