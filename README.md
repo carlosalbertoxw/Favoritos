@@ -34,7 +34,7 @@ Para detenerlo:
 docker compose -f docker-compose.yml -f docker-compose.api.yml down
 ```
 
-Si recreas la API, recrea también el frontend con `--force-recreate`, porque cambia su IP. Para usar un backend fuera de Docker, omite `docker-compose.api.yml`: nginx reenviará `/api/` al puerto 5000 de tu máquina.
+Si recreas la API, recrea también el frontend con `--force-recreate`, porque cambia su IP. Para usar un backend fuera de Docker, omite `docker-compose.api.yml`: nginx reenviará `/api/` al puerto 5000 de tu máquina, donde el backend debe escuchar en `0.0.0.0`, no solo en `127.0.0.1`.
 
 ### Con Node local
 
@@ -57,7 +57,7 @@ Se leen del entorno o de un archivo `.env` (copia [`.env.example`](.env.example)
 | Variable      | Descripción                                                  | Por defecto                        |
 | ------------- | ------------------------------------------------------------ | ---------------------------------- |
 | `API_URL`     | Backend al que nginx reenvía `/api/*`, sin barra final       | `http://host.docker.internal:5000` |
-| `WEB_PORT`    | Puerto de tu máquina donde se publica la app                 | `8090`                             |
+| `WEB_PORT`    | Puerto de tu máquina donde se publica la app (el contenedor escucha en `8080`) | `8090`           |
 | `API_NETWORK` | Red de Docker de la API; solo con `docker-compose.api.yml`   | `api-restful-favoritos_default`    |
 
 ## Rutas
@@ -77,11 +77,18 @@ El formulario aplica las mismas reglas que la API ([validadores](src/app/favorit
 
 ```bash
 npm run lint              # ESLint
+npm test                  # pruebas en modo observación
 npm run test:unit         # pruebas unitarias
 npm run test:integration  # rutas, componentes y servicio reales, con la red simulada
 npm run test:ci           # todas, con umbral mínimo de cobertura
 npm run build             # build de producción
-npm run healthcheck       # verifica el build local; acepta una URL y --with-api o --with-headers
+npm run healthcheck       # sirve y verifica el build local
+```
+
+Para verificar un despliegue, indica su URL. `--with-api` comprueba además el proxy hacia la API y `--with-headers` las cabeceras de seguridad de nginx. Cada petición espera 5 s; se puede cambiar con `HEALTHCHECK_TIMEOUT_MS`.
+
+```bash
+node scripts/healthcheck.mjs http://localhost:8090 --with-api --with-headers
 ```
 
 El workflow de [CI](.github/workflows/ci.yml) ejecuta el lint, las pruebas, el build, una verificación de la imagen Docker (incluidas las cabeceras de seguridad y que no corra como root) y `npm audit`. Dependabot propone las actualizaciones cada semana.
