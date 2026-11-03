@@ -26,5 +26,6 @@ describe('App', () => {
     expect(el.querySelector('#header > a')?.getAttribute('href')).toBe('/');
     expect(el.querySelector('.btn-add-favorito')?.getAttribute('href')).toBe('/agregar-favorito');
     expect(el.querySelector('router-outlet')).not.toBeNull();
+    expect(el.querySelector('footer')?.textContent).toContain('licencia MIT');
   });
 });

@@ -19,6 +19,7 @@ type Campo = keyof FavoritoFormGroup['controls'];
 export class FavoritoForm {
   readonly form = input.required<FavoritoFormGroup>();
   readonly submitLabel = input.required<string>();
+  readonly saving = input(false);
   readonly submitted = output<void>();
 
   protected readonly limits = FAVORITO_LIMITS;

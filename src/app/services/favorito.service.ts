@@ -4,34 +4,38 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import {
-  Favorito,
   FavoritoResponse,
   FavoritosResponse,
-  MessageResponse,
+  NuevoFavorito,
 } from '../models/favorito';
 
 @Injectable({ providedIn: 'root' })
 export class FavoritoService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiUrl;
+  private readonly baseUrl = `${environment.apiUrl}/favoritos`;
 
-  getFavoritos(): Observable<FavoritosResponse> {
-    return this.http.get<FavoritosResponse>(`${this.baseUrl}/favoritos`);
+  getFavoritos(skip: number, limit: number): Observable<FavoritosResponse> {
+    return this.http.get<FavoritosResponse>(this.baseUrl, { params: { skip, limit } });
   }
 
   getFavorito(id: string): Observable<FavoritoResponse> {
-    return this.http.get<FavoritoResponse>(`${this.baseUrl}/favorito/${id}`);
+    return this.http.get<FavoritoResponse>(this.favoritoUrl(id));
   }
 
-  addFavorito(favorito: Favorito): Observable<FavoritoResponse> {
-    return this.http.post<FavoritoResponse>(`${this.baseUrl}/favorito`, favorito);
+  addFavorito(favorito: NuevoFavorito): Observable<FavoritoResponse> {
+    return this.http.post<FavoritoResponse>(this.baseUrl, favorito);
   }
 
-  editFavorito(id: string, favorito: Favorito): Observable<FavoritoResponse> {
-    return this.http.put<FavoritoResponse>(`${this.baseUrl}/favorito/${id}`, favorito);
+  editFavorito(id: string, favorito: NuevoFavorito): Observable<FavoritoResponse> {
+    return this.http.patch<FavoritoResponse>(this.favoritoUrl(id), favorito);
   }
 
-  deleteFavorito(id: string): Observable<MessageResponse> {
-    return this.http.delete<MessageResponse>(`${this.baseUrl}/favorito/${id}`);
+  deleteFavorito(id: string): Observable<void> {
+    return this.http.delete<void>(this.favoritoUrl(id));
+  }
+
+  /** El id viene de la URL de la app: se codifica para que no pueda alterar la ruta de la API (p. ej. `../`). */
+  private favoritoUrl(id: string): string {
+    return `${this.baseUrl}/${encodeURIComponent(id)}`;
   }
 }

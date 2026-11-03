@@ -2,13 +2,6 @@ body {
   font-family: Helvetica, Arial, sans-serif;
 }
 
-.clearfix {
-  float: none;
-  clear: both;
-  text-decoration: none;
-  list-style: none;
-}
-
 #content {
   width: 80%;
   min-height: 500px;
@@ -20,6 +13,11 @@ body {
 }
 
 header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
   padding: 15px;
   background: #229138;
 }
@@ -28,8 +26,12 @@ header a {
   text-decoration: none;
 }
 
+header > a:first-child {
+  display: flex;
+  align-items: center;
+}
+
 header .title-subtitle {
-  float: left;
   border-bottom: 1px solid white;
   border-top: 1px solid white;
   color: white;
@@ -47,18 +49,12 @@ header p {
 }
 
 header #logo {
-  display: block;
-  float: left;
-  margin-top: 10px;
   width: 65px;
 }
 
 .btn-add-favorito {
-  display: block;
   padding: 10px;
-  float: right;
   margin-right: 30px;
-  margin-top: 5px;
   background: #eee;
   border-radius: 4px;
   border: 1px solid #ccc;
@@ -74,26 +70,21 @@ header #logo {
 }
 
 #favoritos-list {
-  padding: 0;
-  margin: 0;
-}
-
-.favorito-item {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 20px;
   list-style: none;
-  border: 1px solid #ddd;
-  float: left;
-  width: 31%;
-  height: 120px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  color: gray;
-  background: white;
+  padding: 0;
   margin: 10px;
 }
 
-.favorito-item .content-data {
-  float: left;
-  margin-left: 20px;
+.favorito-item {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #ddd;
+  padding: 20px;
+  color: gray;
+  background: white;
 }
 
 .favorito-item h4 {
@@ -107,14 +98,14 @@ header #logo {
   padding: 0;
   height: 45px;
   overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .btn {
   display: inline-block;
   font-size: 13px;
   font-family: inherit;
-  border: 1px solid #ccc;
-  border-color: #1976d2;
+  border: 1px solid #1976d2;
   border-radius: 4px;
   box-shadow: 0 0 5px #ddd;
   padding: 5px;
@@ -138,17 +129,14 @@ header #logo {
 .btn-default {
   background: #eaa615;
   border-color: #cc9416;
-  color: white;
   margin-left: 0;
 }
 
 .favorito-box {
-  margin-left: 25px;
   background: white;
   border: 1px solid #ddd;
-  width: 91%;
   min-height: 150px;
-  margin-top: 20px;
+  margin: 20px;
   padding: 20px;
 }
 
@@ -167,9 +155,10 @@ header #logo {
   min-height: 80px;
 }
 
-.loading {
+.loading,
+.cargar-mas {
   text-align: center;
-  margin-top: 30px;
+  margin: 30px 0;
 }
 
 footer {
@@ -178,11 +167,12 @@ footer {
   color: gray;
 }
 
+/* Cubre la tarjeta del favorito mientras se confirma el borrado. */
 .seguro {
-  background: white none repeat scroll 0 0;
-  margin-top: -95px;
   position: absolute;
-  width: 275px;
+  inset: 0;
+  padding: 10px;
+  background: white;
   text-align: center;
 }
 
