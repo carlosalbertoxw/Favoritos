@@ -6,8 +6,8 @@ services:
     ports:
       - "${WEB_PORT:-8090}:8080"
     environment:
-      # Backend al que nginx reenvía /api/. Si no se define, usa el valor del Dockerfile.
-      - API_URL
+      # Backend al que nginx reenvía /api/. Por defecto, el puerto 5000 de la máquina anfitriona.
+      API_URL: ${API_URL:-http://host.docker.internal:5000}
     extra_hosts:
       # Permite resolver host.docker.internal también en Linux.
       - "host.docker.internal:host-gateway"
