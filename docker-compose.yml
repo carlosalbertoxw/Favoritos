@@ -4,7 +4,7 @@ services:
     image: favoritos:latest
     container_name: favoritos
     ports:
-      - "${WEB_PORT:-8090}:80"
+      - "${WEB_PORT:-8090}:8080"
     environment:
       # Backend al que nginx reenvía /api/. Por defecto, el puerto 5000 de la máquina anfitriona.
       API_URL: ${API_URL:-http://host.docker.internal:5000}

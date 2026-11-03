@@ -7,6 +7,9 @@ coverage
 .vscode
 .idea
 Dockerfile
-docker-compose.yml
+docker-compose*.yml
 .dockerignore
+README.md
 *.log
+.env
+.env.*

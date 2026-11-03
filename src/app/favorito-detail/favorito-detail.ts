@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import { FavoritoService } from '../services/favorito.service';
 import { Favorito } from '../models/favorito';
@@ -11,30 +12,23 @@ import { Favorito } from '../models/favorito';
 })
 export class FavoritoDetail implements OnInit {
   private readonly favoritoService = inject(FavoritoService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly id = input.required<string>();
 
   protected readonly favorito = signal<Favorito | null>(null);
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.router.navigate(['/']);
-      return;
-    }
-
-    this.favoritoService.getFavorito(id).subscribe({
-      next: (res) => {
-        if (res.favorito) {
-          this.favorito.set(res.favorito);
-        } else {
+    this.favoritoService
+      .getFavorito(this.id())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ favorito }) => this.favorito.set(favorito),
+        error: (err) => {
+          console.error(err);
           this.router.navigate(['/']);
-        }
-      },
-      error: (err) => {
-        console.error(err);
-        this.router.navigate(['/']);
-      },
-    });
+        },
+      });
   }
 }

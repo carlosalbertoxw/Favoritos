@@ -6,12 +6,15 @@
  *   node scripts/healthcheck.mjs <url>             Verifica un despliegue (p. ej. https://mi-dominio.com)
  *   node scripts/healthcheck.mjs                   Sirve dist/favoritos/browser en un puerto local y lo verifica
  *   node scripts/healthcheck.mjs <url> --with-api  Además verifica la API a través de /api
+ *   node scripts/healthcheck.mjs <url> --with-headers  Además verifica las cabeceras de seguridad (nginx)
  *
  * Comprobaciones:
  *   1. GET /health.json responde 200 con { "status": "ok" }
  *   2. GET / responde 200 con HTML que contiene <app-root>
  *   3. Los scripts y hojas de estilo referenciados por index.html responden 200
  *   4. (--with-api) GET /api/favoritos responde 200 con { favoritos: [...] }
+ *   5. (--with-headers) index.html, el fallback de la SPA, los recursos y /health.json
+ *      incluyen las cabeceras de seguridad de docker/nginx/security-headers.conf
  *
  * Sale con código 0 si todo pasa y 1 si algo falla.
  */
@@ -21,6 +24,15 @@ import { extname, join, normalize, resolve } from 'node:path';
 
 const TIMEOUT_MS = Number(process.env.HEALTHCHECK_TIMEOUT_MS ?? 5000);
 const DIST_DIR = resolve('dist/favoritos/browser');
+
+/** Cabeceras de seguridad que deben estar presentes en todas las respuestas de nginx. */
+const SECURITY_HEADERS = {
+  'content-security-policy': /frame-ancestors 'none'/,
+  'x-content-type-options': /^nosniff$/,
+  'x-frame-options': /^DENY$/,
+  'referrer-policy': /^strict-origin-when-cross-origin$/,
+  'permissions-policy': /camera=\(\)/,
+};
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -34,7 +46,7 @@ const MIME_TYPES = {
 
 async function get(url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  return { status: res.status, body: await res.text() };
+  return { status: res.status, headers: res.headers, body: await res.text() };
 }
 
 async function check(name, fn) {
@@ -75,11 +87,16 @@ async function serveDist() {
 async function main() {
   const args = process.argv.slice(2);
   const withApi = args.includes('--with-api');
+  const withHeaders = args.includes('--with-headers');
   let baseUrl = args.find((arg) => !arg.startsWith('--'));
   let local;
 
   if (withApi && !baseUrl) {
     console.error('--with-api requiere la URL de un despliegue con la API disponible en /api.');
+    process.exit(1);
+  }
+  if (withHeaders && !baseUrl) {
+    console.error('--with-headers requiere la URL de un despliegue servido por nginx.');
     process.exit(1);
   }
 
@@ -97,6 +114,7 @@ async function main() {
   console.log(`Healthcheck de ${baseUrl}`);
 
   let html = '';
+  let assets = [];
   const results = [
     await check('GET /health.json', async () => {
       const { status, body } = await get(`${baseUrl}/health.json`);
@@ -110,7 +128,7 @@ async function main() {
       html = body;
     }),
     await check('Recursos de index.html', async () => {
-      const assets = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
+      assets = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
       assert(assets.length > 0, 'no se encontraron scripts ni estilos');
       for (const asset of assets) {
         const { status } = await get(new URL(asset, `${baseUrl}/`).href);
@@ -125,6 +143,26 @@ async function main() {
         const { status, body } = await get(`${baseUrl}/api/favoritos`);
         assert(status === 200, `status ${status}`);
         assert(Array.isArray(JSON.parse(body).favoritos), `respuesta inesperada: ${body.slice(0, 200)}`);
+      }),
+    );
+  }
+
+  if (withHeaders) {
+    results.push(
+      await check('Cabeceras de seguridad', async () => {
+        // La CSP (script-src 'self') bloquearía cualquier script inline de index.html.
+        assert(!/<script(?![^>]*\ssrc=)[^>]*>/.test(html), 'index.html contiene un <script> inline');
+        // Rutas servidas por locations distintos de nginx (el add_header de un location anula los del server).
+        const paths = ['/', '/agregar-favorito', '/health.json', ...assets.slice(0, 1)];
+        for (const path of paths) {
+          const { status, headers } = await get(new URL(path, `${baseUrl}/`).href);
+          assert(status === 200, `${path} respondió ${status}`);
+          for (const [name, expected] of Object.entries(SECURITY_HEADERS)) {
+            const value = headers.get(name);
+            assert(value !== null, `${path} no envía ${name}`);
+            assert(expected.test(value), `${path} envía ${name}: ${value}`);
+          }
+        }
       }),
     );
   }

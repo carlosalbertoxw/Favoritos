@@ -1,0 +1,9 @@
+<div class="favorito-box">
+  <h1>{{ titleSection() }}</h1>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <app-favorito-form [form]="form" [submitLabel]="titleSection()" [saving]="saving()" (submitted)="onSubmit()" />
+</div>

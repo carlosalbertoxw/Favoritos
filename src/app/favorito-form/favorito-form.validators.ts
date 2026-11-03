@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-import { Favorito } from '../models/favorito';
+import { NuevoFavorito } from '../models/favorito';
 
 /** Límites de longitud definidos por la API (se miden sin espacios al inicio ni al final). */
 export const FAVORITO_LIMITS = {
@@ -57,12 +57,7 @@ export function httpUrl(): ValidatorFn {
     if (!HTTP_URL_REGEX.test(value)) {
       return { protocol: true };
     }
-    try {
-      const { protocol, hostname } = new URL(value);
-      return (protocol === 'http:' || protocol === 'https:') && hostname ? null : { url: true };
-    } catch {
-      return { url: true };
-    }
+    return URL.canParse(value) ? null : { url: true };
   };
 }
 
@@ -77,7 +72,7 @@ export function createFavoritoForm(fb: FormBuilder) {
 export type FavoritoFormGroup = ReturnType<typeof createFavoritoForm>;
 
 /** Valores del formulario listos para enviar a la API. */
-export function toFavorito(form: FavoritoFormGroup): Favorito {
+export function toFavorito(form: FavoritoFormGroup): NuevoFavorito {
   const { title, description, url } = form.getRawValue();
   return { title: title.trim(), description: description.trim(), url: url.trim() };
 }

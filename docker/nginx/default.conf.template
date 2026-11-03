@@ -1,15 +1,31 @@
+# Caché según el archivo servido. $uri ya es /index.html cuando se aplica el fallback de la SPA.
+map $uri $cache_control {
+    default            "";
+    /index.html        "no-cache";
+    /health.json       "no-store";
+    "~*\.(?:js|css)$"  "public, max-age=31536000, immutable";
+}
+
 server {
-    listen 80;
+    listen 8080;
     server_name _;
 
     root /usr/share/nginx/html;
     index index.html;
 
+    # No revelar la versión de nginx en cabeceras ni páginas de error.
+    server_tokens off;
+
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
+    # Un add_header dentro de un location anularía estos: usa el map para variar el Cache-Control.
+    include /etc/nginx/snippets/security-headers.conf;
+    add_header Cache-Control $cache_control;
+
     # Proxy a la API: la app en producción usa apiUrl = '/api'.
-    location /api/ {
+    # ^~ evita que una regla de archivos estáticos capture rutas como /api/x.js.
+    location ^~ /api/ {
         proxy_pass ${API_URL};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -18,22 +34,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Healthcheck: nunca en caché y sin ensuciar los logs.
+    # Healthcheck: sin ensuciar los logs.
     location = /health.json {
         access_log off;
-        add_header Cache-Control "no-store";
         try_files $uri =404;
-    }
-
-    # Archivos con hash en el nombre: caché de larga duración.
-    location ~* \.(?:js|css)$ {
-        add_header Cache-Control "public, max-age=31536000, immutable";
-        try_files $uri =404;
-    }
-
-    # index.html siempre fresco para tomar el último despliegue.
-    location = /index.html {
-        add_header Cache-Control "no-cache";
     }
 
     # Fallback de SPA: las rutas de Angular se resuelven en el cliente.
