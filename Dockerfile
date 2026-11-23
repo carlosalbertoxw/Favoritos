@@ -11,8 +11,15 @@ COPY . .
 RUN npm run build
 
 # --- Etapa 2: servir el build con nginx, sin privilegios de root ---
-# Versión fija (rama estable 1.30) para builds reproducibles; Dependabot propone las nuevas.
-FROM nginxinc/nginx-unprivileged:1.30-alpine
+# Versión fija (rama mainline 1.31, la que recomienda nginx.org) para builds reproducibles;
+# Dependabot propone las nuevas. La rama estable 1.30 tarda más en recibir correcciones.
+FROM nginxinc/nginx-unprivileged:1.31-alpine
+
+# La imagen base se publica con menos frecuencia que los parches de Alpine y nginx:
+# se aplican al construir. La imagen corre como el usuario sin privilegios 101.
+USER root
+RUN apk upgrade --no-cache
+USER 101
 
 # URL del backend al que nginx reenvía las peticiones a /api/.
 # host.docker.internal apunta a la máquina anfitriona (ver README).

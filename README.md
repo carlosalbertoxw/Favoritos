@@ -107,7 +107,7 @@ Usan `http://localhost:8090`; para otra URL, define `E2E_BASE_URL`.
 
 ### CI
 
-El workflow de [CI](.github/workflows/ci.yml) ejecuta el lint, las pruebas, el build, una verificación de la imagen Docker (cabeceras de seguridad, que no corra como root y escaneo con Trivy), las pruebas e2e contra la API y `npm audit`. Las e2e usan la rama de Api-restful-favoritos con el mismo nombre si existe (para cambios coordinados) o `master`.
+El workflow de [CI](.github/workflows/ci.yml) ejecuta el lint, las pruebas, el build, una verificación de la imagen Docker (cabeceras de seguridad, que no corra como root y escaneo con Trivy), las pruebas e2e contra la API y `npm audit`. En un PR, las e2e usan la rama de Api-restful-favoritos con el mismo nombre si existe (para cambios coordinados); en `master` y en las ejecuciones manuales, siempre su `master`.
 
 Dependabot propone las actualizaciones cada semana, agrupadas (Angular, Vitest y el resto de herramientas de desarrollo), y los parches y versiones menores se integran solos cuando el CI pasa. Las versiones mayores quedan para revisión manual.
 

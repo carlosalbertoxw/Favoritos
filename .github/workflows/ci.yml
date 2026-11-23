@@ -79,26 +79,26 @@ jobs:
           path: Favoritos
       - name: Elegir la rama de la API
         id: api-ref
-        # Si la API tiene una rama con el mismo nombre (cambio coordinado), se prueba contra ella.
+        # Solo en un PR: si la API tiene una rama con el mismo nombre (cambio coordinado), se
+        # prueba contra ella. En push a master o en una ejecución manual se usa siempre master,
+        # para no ejecutar código de otra rama con los permisos de la rama principal.
+        if: github.event_name == 'pull_request'
         env:
-          BRANCH: ${{ github.head_ref || github.ref_name }}
+          BRANCH: ${{ github.head_ref }}
           API_REPO: ${{ github.repository_owner }}/Api-restful-favoritos
         run: |
           if git ls-remote --exit-code --heads "https://github.com/$API_REPO.git" "$BRANCH" > /dev/null; then
             echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=master" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/checkout@v7
         with:
           repository: ${{ github.repository_owner }}/Api-restful-favoritos
-          ref: ${{ steps.api-ref.outputs.ref }}
+          ref: ${{ steps.api-ref.outputs.ref || 'master' }}
           path: Api-restful-favoritos
+      # Sin caché de npm: este job ejecuta código de otro repositorio y no debe poder escribirla.
       - uses: actions/setup-node@v7
         with:
           node-version: 26
-          cache: npm
-          cache-dependency-path: Favoritos/package-lock.json
       - run: npm ci
       - name: Levantar app, API y MongoDB (espera a los healthchecks)
         run: docker compose -f docker-compose.yml -f docker-compose.api.yml up -d --build --wait --wait-timeout 240
