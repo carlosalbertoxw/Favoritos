@@ -3,17 +3,17 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormControl } from '@angular/forms';
 
 import {
-  FAVORITO_LIMITS,
+  BOOKMARK_LIMITS,
   applyApiErrors,
-  createFavoritoForm,
+  createBookmarkForm,
   describeSaveError,
   httpUrl,
   maxLengthTrimmed,
   requiredTrimmed,
-  toFavorito,
-} from './favorito-form.validators';
+  toBookmark,
+} from './bookmark-form.validators';
 
-describe('favorito-form.validators', () => {
+describe('bookmark-form.validators', () => {
   const validate = (validator: ReturnType<typeof httpUrl>, value: string) =>
     validator(new FormControl(value));
 
@@ -84,8 +84,8 @@ describe('favorito-form.validators', () => {
     });
   });
 
-  describe('createFavoritoForm', () => {
-    const create = () => TestBed.runInInjectionContext(() => createFavoritoForm(new FormBuilder()));
+  describe('createBookmarkForm', () => {
+    const create = () => TestBed.runInInjectionContext(() => createBookmarkForm(new FormBuilder()));
 
     it('es válido con título y URL, y descripción opcional', () => {
       const form = create();
@@ -96,23 +96,23 @@ describe('favorito-form.validators', () => {
     it('aplica los límites de la API', () => {
       const form = create();
       form.setValue({
-        title: 'a'.repeat(FAVORITO_LIMITS.title + 1),
-        description: 'a'.repeat(FAVORITO_LIMITS.description + 1),
+        title: 'a'.repeat(BOOKMARK_LIMITS.title + 1),
+        description: 'a'.repeat(BOOKMARK_LIMITS.description + 1),
         url: 'https://a.com',
       });
       expect(form.controls.title.hasError('maxlength')).toBe(true);
       expect(form.controls.description.hasError('maxlength')).toBe(true);
     });
 
-    it('toFavorito recorta los espacios', () => {
+    it('toBookmark recorta los espacios', () => {
       const form = create();
       form.setValue({ title: ' T ', description: ' D ', url: ' https://a.com ' });
-      expect(toFavorito(form)).toEqual({ title: 'T', description: 'D', url: 'https://a.com' });
+      expect(toBookmark(form)).toEqual({ title: 'T', description: 'D', url: 'https://a.com' });
     });
   });
 
   describe('applyApiErrors', () => {
-    const create = () => createFavoritoForm(new FormBuilder());
+    const create = () => createBookmarkForm(new FormBuilder());
     const badRequest = (errors: unknown) =>
       new HttpErrorResponse({ status: 400, error: { message: 'Datos inválidos', errors } });
 

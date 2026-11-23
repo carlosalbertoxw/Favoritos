@@ -50,6 +50,14 @@ jobs:
         run: node scripts/healthcheck.mjs http://localhost:8090 --with-headers
       - name: El contenedor corre sin privilegios de root
         run: test "$(docker compose exec -T web id -u)" != "0"
+      - name: Escanear la imagen con Trivy (vulnerabilidades altas o críticas con parche)
+        # Fijada por el SHA del commit de v0.36.0: una etiqueta movida no cambia lo que se ejecuta.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: favoritos:latest
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
       - name: Logs del contenedor
         if: failure()
         run: docker compose ps && docker compose logs

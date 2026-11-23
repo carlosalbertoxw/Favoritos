@@ -12,7 +12,7 @@
  *   1. GET /health.json responde 200 con { "status": "ok" }
  *   2. GET / responde 200 con HTML que contiene <app-root>
  *   3. Los scripts y hojas de estilo referenciados por index.html responden 200
- *   4. (--with-api) GET /api/favoritos responde 200 con { favoritos: [...] }
+ *   4. (--with-api) GET /api/v1/bookmarks responde 200 con { bookmarks: [...], hasMore }
  *   5. (--with-headers) index.html, el fallback de la SPA, los recursos y /health.json
  *      incluyen las cabeceras de seguridad de docker/nginx/security-headers.conf
  *
@@ -139,10 +139,14 @@ async function main() {
 
   if (withApi) {
     results.push(
-      await check('GET /api/favoritos', async () => {
-        const { status, body } = await get(`${baseUrl}/api/favoritos`);
+      await check('GET /api/v1/bookmarks', async () => {
+        const { status, body } = await get(`${baseUrl}/api/v1/bookmarks`);
         assert(status === 200, `status ${status}`);
-        assert(Array.isArray(JSON.parse(body).favoritos), `respuesta inesperada: ${body.slice(0, 200)}`);
+        const data = JSON.parse(body);
+        assert(
+          Array.isArray(data.bookmarks) && typeof data.hasMore === 'boolean',
+          `respuesta inesperada: ${body.slice(0, 200)}`,
+        );
       }),
     );
   }

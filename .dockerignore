@@ -13,3 +13,7 @@ README.md
 *.log
 .env
 .env.*
+e2e
+playwright.config.ts
+test-results
+playwright-report
