@@ -24,7 +24,7 @@ describe('App', () => {
     expect(el.querySelector('h1')?.textContent).toContain('Favoritos');
     expect(el.querySelector('.title-subtitle p')?.textContent).toContain('Marcadores favoritos');
     expect(el.querySelector('#header > a')?.getAttribute('href')).toBe('/');
-    expect(el.querySelector('.btn-add-favorito')?.getAttribute('href')).toBe('/agregar-favorito');
+    expect(el.querySelector('.btn-add-bookmark')?.getAttribute('href')).toBe('/agregar-favorito');
     expect(el.querySelector('router-outlet')).not.toBeNull();
     expect(el.querySelector('footer')?.textContent).toContain('licencia MIT');
   });

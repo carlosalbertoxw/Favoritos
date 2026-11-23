@@ -1,0 +1,18 @@
+@if (bookmark(); as bookmark) {
+  <div class="bookmark-box">
+    <h1>{{ bookmark.title }}</h1>
+    <p class="url">
+      <a [href]="bookmark.url" target="_blank" rel="noopener">{{ bookmark.url }}</a>
+    </p>
+    <p class="description">{{ bookmark.description }}</p>
+  </div>
+} @else if (resource.isLoading()) {
+  <div class="loading">
+    <img src="images/loader.gif" alt="Cargando…">
+  </div>
+} @else if (loadFailed()) {
+  <div class="bookmark-box">
+    <p class="error" role="alert">No se pudo cargar el favorito.</p>
+    <button type="button" class="btn" (click)="resource.reload()">Reintentar</button>
+  </div>
+}

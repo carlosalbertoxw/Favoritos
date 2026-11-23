@@ -2,27 +2,27 @@ import { Component, input, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import {
-  FAVORITO_ERROR_MESSAGES,
-  FAVORITO_LIMITS,
-  FavoritoFormGroup,
-} from './favorito-form.validators';
+  BOOKMARK_ERROR_MESSAGES,
+  BOOKMARK_LIMITS,
+  BookmarkFormGroup,
+} from './bookmark-form.validators';
 
-type Campo = keyof FavoritoFormGroup['controls'];
+type Campo = keyof BookmarkFormGroup['controls'];
 
 /** Campos, validaciones y mensajes compartidos por el alta y la edición de favoritos. */
 @Component({
-  selector: 'app-favorito-form',
+  selector: 'app-bookmark-form',
   imports: [ReactiveFormsModule],
-  templateUrl: './favorito-form.html',
-  styleUrl: './favorito-form.css',
+  templateUrl: './bookmark-form.html',
+  styleUrl: './bookmark-form.css',
 })
-export class FavoritoForm {
-  readonly form = input.required<FavoritoFormGroup>();
+export class BookmarkForm {
+  readonly form = input.required<BookmarkFormGroup>();
   readonly submitLabel = input.required<string>();
   readonly saving = input(false);
   readonly submitted = output<void>();
 
-  protected readonly limits = FAVORITO_LIMITS;
+  protected readonly limits = BOOKMARK_LIMITS;
 
   /** Primer mensaje de error del campo, solo si el usuario ya interactuó con él. */
   protected errorFor(campo: Campo): string | null {
@@ -31,6 +31,6 @@ export class FavoritoForm {
       return null;
     }
     const [key, value] = Object.entries(control.errors)[0];
-    return key === 'api' ? String(value) : (FAVORITO_ERROR_MESSAGES[campo]?.[key] ?? null);
+    return key === 'api' ? String(value) : (BOOKMARK_ERROR_MESSAGES[campo]?.[key] ?? null);
   }
 }

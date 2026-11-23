@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 
-import { FavoritosList } from './favoritos-list/favoritos-list';
-import { FavoritoDetail } from './favorito-detail/favorito-detail';
-import { FavoritoEditor } from './favorito-editor/favorito-editor';
+import { BookmarkList } from './bookmark-list/bookmark-list';
+import { BookmarkDetail } from './bookmark-detail/bookmark-detail';
+import { BookmarkEditor } from './bookmark-editor/bookmark-editor';
 
 export const routes: Routes = [
-  { path: '', component: FavoritosList },
-  { path: 'favorito/:id', component: FavoritoDetail },
-  { path: 'agregar-favorito', component: FavoritoEditor },
-  { path: 'editar-favorito/:id', component: FavoritoEditor },
+  { path: '', component: BookmarkList },
+  { path: 'favorito/:id', component: BookmarkDetail },
+  { path: 'agregar-favorito', component: BookmarkEditor },
+  { path: 'editar-favorito/:id', component: BookmarkEditor },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,39 @@
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+
+<ul id="bookmark-list">
+  @for (bookmark of bookmarks(); track bookmark.id) {
+    <li class="bookmark-item">
+      <h4>{{ bookmark.title }}</h4>
+      <p class="url">{{ bookmark.url }}</p>
+      <p class="buttons">
+        <a [href]="bookmark.url" target="_blank" rel="noopener" class="btn btn-default">Ir al marcador</a>
+        <a [routerLink]="['/favorito', bookmark.id]" class="btn btn-view">Ver</a>
+        <a [routerLink]="['/editar-favorito', bookmark.id]" class="btn btn-edit">Editar</a>
+        <button type="button" (click)="onAskDelete(bookmark.id)" class="btn btn-delete">Eliminar</button>
+      </p>
+      @if (confirmingId() === bookmark.id) {
+        <div class="confirm-delete">
+          <p><strong>¿Estás seguro de borrar este elemento?</strong></p>
+          <button type="button" (click)="onDelete(bookmark.id)" class="btn btn-delete">Eliminar</button>
+          <button type="button" (click)="onCancelDelete()" class="btn btn-view">Cancelar</button>
+        </div>
+      }
+    </li>
+  } @empty {
+    @if (!loading() && !error() && !hasMore()) {
+      <li class="empty">No hay favoritos todavía.</li>
+    }
+  }
+</ul>
+
+@if (loading()) {
+  <div class="loading">
+    <img src="images/loader.gif" alt="Cargando…">
+  </div>
+} @else if (hasMore()) {
+  <p class="load-more">
+    <button type="button" (click)="onLoadMore()" class="btn">Cargar más</button>
+  </p>
+}

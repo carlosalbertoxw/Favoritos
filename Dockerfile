@@ -11,7 +11,8 @@ COPY . .
 RUN npm run build
 
 # --- Etapa 2: servir el build con nginx, sin privilegios de root ---
-FROM nginxinc/nginx-unprivileged:stable-alpine
+# Versión fija (rama estable 1.30) para builds reproducibles; Dependabot propone las nuevas.
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 
 # URL del backend al que nginx reenvía las peticiones a /api/.
 # host.docker.internal apunta a la máquina anfitriona (ver README).

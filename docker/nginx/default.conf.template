@@ -23,7 +23,7 @@ server {
     include /etc/nginx/snippets/security-headers.conf;
     add_header Cache-Control $cache_control;
 
-    # Proxy a la API: la app en producción usa apiUrl = '/api'.
+    # Proxy a la API: la app la llama en /api/v1 desde este mismo origen.
     # ^~ evita que una regla de archivos estáticos capture rutas como /api/x.js.
     location ^~ /api/ {
         proxy_pass ${API_URL};
@@ -32,6 +32,8 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # Mismo id en los logs de nginx y de la API (la API lo devuelve en X-Request-Id).
+        proxy_set_header X-Request-Id $request_id;
     }
 
     # Healthcheck: sin ensuciar los logs.

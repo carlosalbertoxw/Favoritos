@@ -1,25 +1,29 @@
 import { TestBed } from '@angular/core/testing';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  TestRequest,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { routes } from './app.routes';
-import { FavoritosList } from './favoritos-list/favoritos-list';
-import { FavoritoDetail } from './favorito-detail/favorito-detail';
-import { FavoritoEditor } from './favorito-editor/favorito-editor';
-import { environment } from '../environments/environment';
-import { Favorito, NuevoFavorito } from './models/favorito';
+import { BookmarkList } from './bookmark-list/bookmark-list';
+
+import { BookmarkEditor } from './bookmark-editor/bookmark-editor';
+import { BOOKMARKS_API } from './services/bookmark.service';
+import { Bookmark, NewBookmark } from './models/bookmark';
 
 /**
- * Pruebas de integración: rutas reales + componentes reales + FavoritoService real.
+ * Pruebas de integración: rutas reales + componentes reales + BookmarkService real.
  * Solo se sustituye la capa de red con HttpTestingController.
  */
 describe('Favoritos (integración)', () => {
-  const api = `${environment.apiUrl}/favoritos`;
+  const api = BOOKMARKS_API;
   const listUrl = `${api}?skip=0&limit=20`;
-  const favoritos: Favorito[] = [
+  const bookmarks: Bookmark[] = [
     { id: '1', title: 'Angular', description: 'Framework web', url: 'https://angular.dev' },
     { id: '2', title: 'Vitest', description: 'Testing', url: 'https://vitest.dev' },
   ];
@@ -51,10 +55,33 @@ describe('Favoritos (integración)', () => {
     await stable();
   }
 
-  function flushList(data: Favorito[]): void {
+  /** Espera a que la app haga la petición (sin esperar la estabilidad, que depende de ella). */
+  async function request(url: string): Promise<TestRequest> {
+    let req: TestRequest | undefined;
+    await vi.waitFor(() => {
+      // Ejecuta la detección de cambios para que el resource lance su petición.
+      TestBed.tick();
+      req = httpMock.expectOne(url);
+    });
+    return req!;
+  }
+
+  /** Navega a una página cuya carga queda pendiente hasta responder la petición. */
+  async function navigateAndRespond(
+    url: string,
+    apiUrl: string,
+    ...response: Parameters<TestRequest['flush']>
+  ): Promise<void> {
+    const navigation = harness.navigateByUrl(url);
+    (await request(apiUrl)).flush(...response);
+    await navigation;
+    await stable();
+  }
+
+  function flushList(data: Bookmark[], hasMore = false): void {
     const req = httpMock.expectOne(listUrl);
     expect(req.request.method).toBe('GET');
-    req.flush({ favoritos: data });
+    req.flush({ bookmarks: data, hasMore });
   }
 
   beforeEach(async () => {
@@ -79,21 +106,21 @@ describe('Favoritos (integración)', () => {
   });
 
   it('la ruta raíz muestra el listado obtenido de la API', async () => {
-    await harness.navigateByUrl('/', FavoritosList);
+    await harness.navigateByUrl('/', BookmarkList);
     expect(root().querySelector('.loading')).not.toBeNull();
 
-    flushList(favoritos);
+    flushList(bookmarks);
     await stable();
 
     expect(root().querySelector('.loading')).toBeNull();
-    const titulos = Array.from(root().querySelectorAll('.favorito-item h4')).map(
+    const titulos = Array.from(root().querySelectorAll('.bookmark-item h4')).map(
       (h) => h.textContent,
     );
     expect(titulos).toEqual(['Angular', 'Vitest']);
   });
 
   it('muestra un error cuando la API del listado falla', async () => {
-    await harness.navigateByUrl('/', FavoritosList);
+    await harness.navigateByUrl('/', BookmarkList);
 
     httpMock
       .expectOne(listUrl)
@@ -104,27 +131,25 @@ describe('Favoritos (integración)', () => {
   });
 
   it('navega del listado al detalle mediante el enlace "Ver"', async () => {
-    await harness.navigateByUrl('/', FavoritosList);
-    flushList(favoritos);
+    await harness.navigateByUrl('/', BookmarkList);
+    flushList(bookmarks);
     await stable();
 
-    await click('.favorito-item .btn-ver');
+    root().querySelector<HTMLElement>('.bookmark-item .btn-view')!.click();
+    (await request(`${api}/1`)).flush({ bookmark: bookmarks[0] });
+    await stable();
 
     expect(location.path()).toBe('/favorito/1');
-    httpMock.expectOne(`${api}/1`).flush({ favorito: favoritos[0] });
-    await stable();
 
-    expect(root().querySelector('.favorito-box h1')?.textContent).toBe('Angular');
+    expect(root().querySelector('.bookmark-box h1')?.textContent).toBe('Angular');
     expect(root().querySelector('.description')?.textContent).toBe('Framework web');
   });
 
   it('el detalle de un favorito inexistente redirige al listado', async () => {
-    await harness.navigateByUrl('/favorito/99', FavoritoDetail);
-
-    httpMock
-      .expectOne(`${api}/99`)
-      .flush('No encontrado', { status: 404, statusText: 'Not Found' });
-    await stable();
+    await navigateAndRespond('/favorito/99', `${api}/99`, 'No encontrado', {
+      status: 404,
+      statusText: 'Not Found',
+    });
 
     expect(location.path()).toBe('');
     flushList([]);
@@ -133,9 +158,9 @@ describe('Favoritos (integración)', () => {
   });
 
   it('agrega un favorito y vuelve al listado actualizado', async () => {
-    const nuevo: NuevoFavorito = { title: 'MDN', description: 'Docs', url: 'https://developer.mozilla.org' };
+    const nuevo: NewBookmark = { title: 'MDN', description: 'Docs', url: 'https://developer.mozilla.org' };
 
-    await harness.navigateByUrl('/agregar-favorito', FavoritoEditor);
+    await harness.navigateByUrl('/agregar-favorito', BookmarkEditor);
     await type('#title', nuevo.title);
     await type('#description', nuevo.description);
     await type('#url', nuevo.url);
@@ -144,17 +169,17 @@ describe('Favoritos (integración)', () => {
     const post = httpMock.expectOne(api);
     expect(post.request.method).toBe('POST');
     expect(post.request.body).toEqual(nuevo);
-    post.flush({ favorito: { ...nuevo, id: '3' } });
+    post.flush({ bookmark: { ...nuevo, id: '3' } });
     await stable();
 
     expect(location.path()).toBe('');
-    flushList([...favoritos, { ...nuevo, id: '3' }]);
+    flushList([...bookmarks, { ...nuevo, id: '3' }]);
     await stable();
-    expect(root().querySelectorAll('.favorito-item').length).toBe(3);
+    expect(root().querySelectorAll('.bookmark-item').length).toBe(3);
   });
 
   it('no llama a la API al enviar el formulario de alta vacío', async () => {
-    await harness.navigateByUrl('/agregar-favorito', FavoritoEditor);
+    await harness.navigateByUrl('/agregar-favorito', BookmarkEditor);
     await submit();
 
     httpMock.expectNone(api);
@@ -164,7 +189,7 @@ describe('Favoritos (integración)', () => {
   });
 
   it('no llama a la API si la URL no es válida', async () => {
-    await harness.navigateByUrl('/agregar-favorito', FavoritoEditor);
+    await harness.navigateByUrl('/agregar-favorito', BookmarkEditor);
     await type('#title', 'Docker');
     await type('#url', 'docs.docker.com');
     await submit();
@@ -176,7 +201,7 @@ describe('Favoritos (integración)', () => {
   });
 
   it('muestra los errores de validación que devuelve la API en sus campos', async () => {
-    await harness.navigateByUrl('/agregar-favorito', FavoritoEditor);
+    await harness.navigateByUrl('/agregar-favorito', BookmarkEditor);
     await type('#title', 'T');
     await type('#url', 'https://u.com');
     await submit();
@@ -200,7 +225,7 @@ describe('Favoritos (integración)', () => {
   });
 
   it('mantiene al usuario en el formulario si la API de alta falla', async () => {
-    await harness.navigateByUrl('/agregar-favorito', FavoritoEditor);
+    await harness.navigateByUrl('/agregar-favorito', BookmarkEditor);
     await type('#title', 'T');
     await type('#description', 'D');
     await type('#url', 'https://u.com');
@@ -216,9 +241,7 @@ describe('Favoritos (integración)', () => {
   });
 
   it('edita un favorito existente y vuelve al listado', async () => {
-    await harness.navigateByUrl('/editar-favorito/1', FavoritoEditor);
-    httpMock.expectOne(`${api}/1`).flush({ favorito: favoritos[0] });
-    await stable();
+    await navigateAndRespond('/editar-favorito/1', `${api}/1`, { bookmark: bookmarks[0] });
 
     expect(root().querySelector<HTMLInputElement>('#title')?.value).toBe('Angular');
 
@@ -232,29 +255,29 @@ describe('Favoritos (integración)', () => {
       description: 'Framework web',
       url: 'https://angular.dev',
     });
-    patch.flush({ favorito: { ...favoritos[0], title: 'Angular 22' } });
+    patch.flush({ bookmark: { ...bookmarks[0], title: 'Angular 22' } });
     await stable();
 
     expect(location.path()).toBe('');
-    flushList([{ ...favoritos[0], title: 'Angular 22' }, favoritos[1]]);
+    flushList([{ ...bookmarks[0], title: 'Angular 22' }, bookmarks[1]]);
     await stable();
-    expect(root().querySelector('.favorito-item h4')?.textContent).toBe('Angular 22');
+    expect(root().querySelector('.bookmark-item h4')?.textContent).toBe('Angular 22');
   });
 
   it('elimina un favorito tras confirmar y lo quita del listado', async () => {
-    await harness.navigateByUrl('/', FavoritosList);
-    flushList(favoritos);
+    await harness.navigateByUrl('/', BookmarkList);
+    flushList(bookmarks);
     await stable();
 
-    await click('.favorito-item .btn-eliminar');
-    await click('.seguro .btn-eliminar');
+    await click('.bookmark-item .btn-delete');
+    await click('.confirm-delete .btn-delete');
 
     const del = httpMock.expectOne(`${api}/1`);
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });
     await stable();
 
-    const items = root().querySelectorAll('.favorito-item');
+    const items = root().querySelectorAll('.bookmark-item');
     expect(items.length).toBe(1);
     expect(items[0].querySelector('h4')?.textContent).toBe('Vitest');
   });

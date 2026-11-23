@@ -20,10 +20,17 @@ updates:
         patterns:
           - vitest
           - "@vitest/*"
+      # El resto de herramientas de desarrollo, juntas: evita conflictos en package-lock.json.
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
   - package-ecosystem: docker
     directory: /
     schedule:

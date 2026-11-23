@@ -50,12 +50,76 @@ jobs:
         run: node scripts/healthcheck.mjs http://localhost:8090 --with-headers
       - name: El contenedor corre sin privilegios de root
         run: test "$(docker compose exec -T web id -u)" != "0"
+      - name: Escanear la imagen con Trivy (vulnerabilidades altas o críticas con parche)
+        # Fijada por el SHA del commit de v0.36.0: una etiqueta movida no cambia lo que se ejecuta.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: favoritos:latest
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
       - name: Logs del contenedor
         if: failure()
         run: docker compose ps && docker compose logs
       - name: Detener el contenedor
         if: always()
         run: docker compose down
+
+  e2e:
+    name: Pruebas e2e (app + API + MongoDB)
+    runs-on: ubuntu-latest
+    needs: verify
+    defaults:
+      run:
+        working-directory: Favoritos
+    steps:
+      # Los dos repositorios quedan uno junto al otro, como espera docker-compose.api.yml.
+      - uses: actions/checkout@v7
+        with:
+          path: Favoritos
+      - name: Elegir la rama de la API
+        id: api-ref
+        # Si la API tiene una rama con el mismo nombre (cambio coordinado), se prueba contra ella.
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          API_REPO: ${{ github.repository_owner }}/Api-restful-favoritos
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/$API_REPO.git" "$BRANCH" > /dev/null; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=master" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/Api-restful-favoritos
+          ref: ${{ steps.api-ref.outputs.ref }}
+          path: Api-restful-favoritos
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: Favoritos/package-lock.json
+      - run: npm ci
+      - name: Levantar app, API y MongoDB (espera a los healthchecks)
+        run: docker compose -f docker-compose.yml -f docker-compose.api.yml up -d --build --wait --wait-timeout 240
+      - name: Healthcheck a través del proxy de la API
+        run: node scripts/healthcheck.mjs http://localhost:8090 --with-api
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - name: Trazas de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: Favoritos/test-results
+          retention-days: 7
+      - name: Logs de los contenedores
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.api.yml logs
+      - name: Detener los contenedores
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.api.yml down -v
 
   vulnerabilities:
     name: Vulnerabilidades de dependencias

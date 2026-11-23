@@ -1,22 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-import { NuevoFavorito } from '../models/favorito';
+import { NewBookmark } from '../models/bookmark';
 
 /** Límites de longitud definidos por la API (se miden sin espacios al inicio ni al final). */
-export const FAVORITO_LIMITS = {
+export const BOOKMARK_LIMITS = {
   title: 200,
   description: 1000,
 } as const;
 
 /** Mensajes por campo y por clave de error. `api` usa el mensaje que devuelve la API. */
-export const FAVORITO_ERROR_MESSAGES: Record<string, Record<string, string>> = {
+export const BOOKMARK_ERROR_MESSAGES: Record<string, Record<string, string>> = {
   title: {
     required: '¡El título es obligatorio!',
-    maxlength: `¡El título no puede tener más de ${FAVORITO_LIMITS.title} caracteres!`,
+    maxlength: `¡El título no puede tener más de ${BOOKMARK_LIMITS.title} caracteres!`,
   },
   description: {
-    maxlength: `¡La descripción no puede tener más de ${FAVORITO_LIMITS.description} caracteres!`,
+    maxlength: `¡La descripción no puede tener más de ${BOOKMARK_LIMITS.description} caracteres!`,
   },
   url: {
     required: '¡La URL es obligatoria!',
@@ -61,18 +61,18 @@ export function httpUrl(): ValidatorFn {
   };
 }
 
-export function createFavoritoForm(fb: FormBuilder) {
+export function createBookmarkForm(fb: FormBuilder) {
   return fb.nonNullable.group({
-    title: ['', [requiredTrimmed(), maxLengthTrimmed(FAVORITO_LIMITS.title)]],
-    description: ['', maxLengthTrimmed(FAVORITO_LIMITS.description)],
+    title: ['', [requiredTrimmed(), maxLengthTrimmed(BOOKMARK_LIMITS.title)]],
+    description: ['', maxLengthTrimmed(BOOKMARK_LIMITS.description)],
     url: ['', [requiredTrimmed(), httpUrl()]],
   });
 }
 
-export type FavoritoFormGroup = ReturnType<typeof createFavoritoForm>;
+export type BookmarkFormGroup = ReturnType<typeof createBookmarkForm>;
 
 /** Valores del formulario listos para enviar a la API. */
-export function toFavorito(form: FavoritoFormGroup): NuevoFavorito {
+export function toBookmark(form: BookmarkFormGroup): NewBookmark {
   const { title, description, url } = form.getRawValue();
   return { title: title.trim(), description: description.trim(), url: url.trim() };
 }
@@ -86,7 +86,7 @@ interface ApiValidationError {
  * Traslada los errores de validación de la API (`400 { errors: [{ path, message }] }`)
  * a los controles del formulario. Devuelve `true` si marcó algún campo.
  */
-export function applyApiErrors(form: FavoritoFormGroup, err: unknown): boolean {
+export function applyApiErrors(form: BookmarkFormGroup, err: unknown): boolean {
   if (!(err instanceof HttpErrorResponse) || err.status !== 400) {
     return false;
   }

@@ -1,0 +1,21 @@
+<div class="bookmark-box">
+  <h1>{{ heading() }}</h1>
+
+  @if (loadFailed()) {
+    <p class="error" role="alert">
+      No se pudo cargar el favorito.
+      <button type="button" class="btn" (click)="resource.reload()">Reintentar</button>
+    </p>
+  }
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <app-bookmark-form
+    [form]="form"
+    [submitLabel]="heading()"
+    [saving]="saving() || blocked()"
+    (submitted)="onSubmit()"
+  />
+</div>
