@@ -65,62 +65,6 @@ jobs:
         if: always()
         run: docker compose down
 
-  e2e:
-    name: Pruebas e2e (app + API + MongoDB)
-    runs-on: ubuntu-latest
-    needs: verify
-    defaults:
-      run:
-        working-directory: Favoritos
-    steps:
-      # Los dos repositorios quedan uno junto al otro, como espera docker-compose.api.yml.
-      - uses: actions/checkout@v7
-        with:
-          path: Favoritos
-      - name: Elegir la rama de la API
-        id: api-ref
-        # Solo en un PR: si la API tiene una rama con el mismo nombre (cambio coordinado), se
-        # prueba contra ella. En push a master o en una ejecución manual se usa siempre master,
-        # para no ejecutar código de otra rama con los permisos de la rama principal.
-        if: github.event_name == 'pull_request'
-        env:
-          BRANCH: ${{ github.head_ref }}
-          API_REPO: ${{ github.repository_owner }}/Api-restful-favoritos
-        run: |
-          if git ls-remote --exit-code --heads "https://github.com/$API_REPO.git" "$BRANCH" > /dev/null; then
-            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
-          fi
-      - uses: actions/checkout@v7
-        with:
-          repository: ${{ github.repository_owner }}/Api-restful-favoritos
-          ref: ${{ steps.api-ref.outputs.ref || 'master' }}
-          path: Api-restful-favoritos
-      # Sin caché de npm: este job ejecuta código de otro repositorio y no debe poder escribirla.
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 26
-      - run: npm ci
-      - name: Levantar app, API y MongoDB (espera a los healthchecks)
-        run: docker compose -f docker-compose.yml -f docker-compose.api.yml up -d --build --wait --wait-timeout 240
-      - name: Healthcheck a través del proxy de la API
-        run: node scripts/healthcheck.mjs http://localhost:8090 --with-api
-      - name: Instalar Chromium
-        run: npx playwright install --with-deps chromium
-      - run: npm run e2e
-      - name: Trazas de Playwright
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-traces
-          path: Favoritos/test-results
-          retention-days: 7
-      - name: Logs de los contenedores
-        if: failure()
-        run: docker compose -f docker-compose.yml -f docker-compose.api.yml logs
-      - name: Detener los contenedores
-        if: always()
-        run: docker compose -f docker-compose.yml -f docker-compose.api.yml down -v
-
   vulnerabilities:
     name: Vulnerabilidades de dependencias
     runs-on: ubuntu-latest

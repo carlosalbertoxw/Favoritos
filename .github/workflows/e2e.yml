@@ -1,0 +1,69 @@
+name: E2E
+
+# Pruebas de extremo a extremo contra la API real. Solo corren en los PR: ahí el job no tiene
+# los permisos ni la caché de la rama principal, así que puede probar contra la rama de la API
+# con el mismo nombre (cambios coordinados) sin riesgo de envenenar la caché de master.
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Pruebas e2e (app + API + MongoDB)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Favoritos
+    steps:
+      # Los dos repositorios quedan uno junto al otro, como espera docker-compose.api.yml.
+      - uses: actions/checkout@v7
+        with:
+          path: Favoritos
+      - name: Elegir la rama de la API
+        id: api-ref
+        # Si la API tiene una rama con el mismo nombre que este PR, se prueba contra ella; si no, contra master.
+        env:
+          BRANCH: ${{ github.head_ref }}
+          API_REPO: ${{ github.repository_owner }}/Api-restful-favoritos
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/$API_REPO.git" "$BRANCH" > /dev/null; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=master" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/Api-restful-favoritos
+          ref: ${{ steps.api-ref.outputs.ref }}
+          path: Api-restful-favoritos
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - run: npm ci
+      - name: Levantar app, API y MongoDB (espera a los healthchecks)
+        run: docker compose -f docker-compose.yml -f docker-compose.api.yml up -d --build --wait --wait-timeout 240
+      - name: Healthcheck a través del proxy de la API
+        run: node scripts/healthcheck.mjs http://localhost:8090 --with-api
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - name: Trazas de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: Favoritos/test-results
+          retention-days: 7
+      - name: Logs de los contenedores
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.api.yml logs
+      - name: Detener los contenedores
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.api.yml down -v
